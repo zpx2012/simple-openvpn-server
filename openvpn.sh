@@ -132,8 +132,11 @@ cert server.crt
 key server.key
 dh dh.pem
 tls-auth ta.key 0
+key-direction 0
+auth SHA256
 topology subnet
 server 10.8.0.0 255.255.255.0
+duplicate-cn
 ifconfig-pool-persist ipp.txt" > /etc/openvpn/server.conf
 echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server.conf
 
@@ -141,7 +144,7 @@ echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server.conf
 echo "push \"dhcp-option DNS $DNS1\"" >> /etc/openvpn/server.conf
 echo "push \"dhcp-option DNS $DNS2\"" >> /etc/openvpn/server.conf
 echo "keepalive 10 120
-cipher AES-256-CBC
+cipher AES-128-CBC
 comp-lzo
 user nobody
 group $GROUPNAME
@@ -218,7 +221,7 @@ else
 	if pgrep systemd-journal; then
 		systemctl restart openvpn@server.service
 		systemctl enable openvpn@server.service
-	else
+	elsexf
 		service openvpn restart
 		chkconfig openvpn on
 	fi
@@ -239,7 +242,7 @@ nobind
 persist-key
 persist-tun
 remote-cert-tls server
-cipher AES-256-CBC
+cipher AES-128-CBC
 comp-lzo
 setenv opt block-outside-dns
 key-direction 1
@@ -248,38 +251,19 @@ verb 3" > /etc/openvpn/client-common.txt
 # Generates the custom client.ovpn
 mv /etc/openvpn/clients/ /etc/openvpn/clients.$$/
 mkdir /etc/openvpn/clients/
-
-#Setup the web server to use an self signed cert
-# mkdir /etc/openvpn/clients/
-
-#Set permissions for easy-rsa and open vpn to be modified by the web user.
-chown -R www-data:www-data /etc/openvpn/easy-rsa
-chown -R www-data:www-data /etc/openvpn/clients/
-chmod -R 755 /etc/openvpn/
-chmod -R 777 /etc/openvpn/crl.pem
-chmod g+s /etc/openvpn/clients/
-chmod g+s /etc/openvpn/easy-rsa/
-
-#Generate a self-signed certificate for the web server
-mv /etc/lighttpd/ssl/ /etc/lighttpd/ssl.$$/
-mkdir /etc/lighttpd/ssl/
-openssl req -new -x509 -keyout /etc/lighttpd/ssl/server.pem -out /etc/lighttpd/ssl/server.pem -days 9999 -nodes -subj "/C=US/ST=California/L=San Francisco/O=example.com/OU=Ops Department/CN=example.com"
-chmod 744 /etc/lighttpd/ssl/server.pem
-
-
-#Configure the web server with the lighttpd.conf from GitHub
-mv /etc/lighttpd/lighttpd.conf /etc/lighttpd/lighttpd.conf.$$
-wget -O /etc/lighttpd/lighttpd.conf https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/lighttpd.conf
-
-#install the webserver scripts
-rm /var/www/html/*
-wget -O /var/www/html/index.sh https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/index.sh
-
-wget -O /var/www/html/download.sh https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/download.sh
-chown -R www-data:www-data /var/www/html/
-
-#set the password file for the WWW logon
-echo "admin:$ADMINPASSWORD" >> /etc/lighttpd/.lighttpdpassword
-
-#restart the web server
-service lighttpd restart
+# Generates the custom client.ovpn
+CNAME=$(hostname)_$PROTOCOL
+cp /etc/openvpn/client-common.txt /etc/openvpn/clients/$CNAME.ovpn
+echo "<ca>" >> /etc/openvpn/clients/$CNAME.ovpn
+cat /etc/openvpn/easy-rsa/pki/ca.crt >> /etc/openvpn/clients/$CNAME.ovpn
+echo "</ca>" >> /etc/openvpn/clients/$CNAME.ovpn
+echo "<cert>" >> /etc/openvpn/clients/$CNAME.ovpn
+cat /etc/openvpn/easy-rsa/pki/issued/$1.crt >> /etc/openvpn/clients/$CNAME.ovpn
+echo "</cert>" >> /etc/openvpn/clients/$CNAME.ovpn
+echo "<key>" >> /etc/openvpn/clients/$CNAME.ovpn
+cat /etc/openvpn/easy-rsa/pki/private/$1.key >> /etc/openvpn/clients/$CNAME.ovpn
+echo "</key>" >> /etc/openvpn/clients/$CNAME.ovpn
+echo "<tls-auth>" >> /etc/openvpn/clients/$CNAME.ovpn
+cat /etc/openvpn/ta.key >> /etc/openvpn/clients/$CNAME.ovpn
+echo "</tls-auth>" >> /etc/openvpn/clients/$CNAME.ovpn
+mv /etc/openvpn/clients/$CNAME.ovpn ~/httpserver
