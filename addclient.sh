@@ -17,3 +17,4 @@ echo "<tls-auth>" >> /etc/openvpn/clients/$client.ovpn
 cat /etc/openvpn/ta.key >> /etc/openvpn/clients/$client.ovpn
 echo "</tls-auth>" >> /etc/openvpn/clients/$client.ovpn
 mv /etc/openvpn/clients/$client.ovpn ~/httpserver
+echo "Success!"
