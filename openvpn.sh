@@ -249,9 +249,8 @@ key-direction 1
 verb 3" > /etc/openvpn/client-common.txt
 
 # Generates the custom client.ovpn
-mv /etc/openvpn/clients/ /etc/openvpn/clients.$$/
 mkdir /etc/openvpn/clients/
-# Generates the custom client.ovpn
+mv /etc/openvpn/clients/ /etc/openvpn/clients.$$/
 CNAME=$(hostname)_$PROTOCOL
 cp /etc/openvpn/client-common.txt /etc/openvpn/clients/$CNAME.ovpn
 echo "<ca>" >> /etc/openvpn/clients/$CNAME.ovpn
