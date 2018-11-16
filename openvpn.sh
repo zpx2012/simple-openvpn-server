@@ -247,22 +247,3 @@ comp-lzo
 setenv opt block-outside-dns
 key-direction 1
 verb 3" > /etc/openvpn/client-common.txt
-
-# Generates the custom client.ovpn
-mkdir /etc/openvpn/clients/
-mv /etc/openvpn/clients/ /etc/openvpn/clients.$$/
-CNAME=$(hostname)_$PROTOCOL
-cp /etc/openvpn/client-common.txt /etc/openvpn/clients/$CNAME.ovpn
-echo "<ca>" >> /etc/openvpn/clients/$CNAME.ovpn
-cat /etc/openvpn/easy-rsa/pki/ca.crt >> /etc/openvpn/clients/$CNAME.ovpn
-echo "</ca>" >> /etc/openvpn/clients/$CNAME.ovpn
-echo "<cert>" >> /etc/openvpn/clients/$CNAME.ovpn
-cat /etc/openvpn/easy-rsa/pki/issued/$1.crt >> /etc/openvpn/clients/$CNAME.ovpn
-echo "</cert>" >> /etc/openvpn/clients/$CNAME.ovpn
-echo "<key>" >> /etc/openvpn/clients/$CNAME.ovpn
-cat /etc/openvpn/easy-rsa/pki/private/$1.key >> /etc/openvpn/clients/$CNAME.ovpn
-echo "</key>" >> /etc/openvpn/clients/$CNAME.ovpn
-echo "<tls-auth>" >> /etc/openvpn/clients/$CNAME.ovpn
-cat /etc/openvpn/ta.key >> /etc/openvpn/clients/$CNAME.ovpn
-echo "</tls-auth>" >> /etc/openvpn/clients/$CNAME.ovpn
-mv /etc/openvpn/clients/$CNAME.ovpn ~/httpserver
